@@ -22,7 +22,7 @@ class Runner
 		foreach ($paths as $path) {
 			$testPaths = testFiles($path);
 			foreach ($testPaths as $testPath) {
-				if (!in_array($testPath, $testClassFiles)) {
+				if (!\in_array($testPath, $testClassFiles, true)) {
 					$testClassFiles[] = $testPath;
 				}
 			}
@@ -40,8 +40,8 @@ class Runner
 
 		foreach (get_declared_classes() as $class) {
 			$classParts = explode('\\', $class);
-			$classBasename = $classParts[count($classParts) - 1];
-			if (0 === strpos($classBasename, '_')) {
+			$classBasename = $classParts[\count($classParts) - 1];
+			if (str_starts_with($classBasename, '_')) {
 				// skip
 				continue;
 			}

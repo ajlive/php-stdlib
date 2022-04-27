@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__.'/../../vendor/autoload.php';
 
 class ReadUserList implements \http\Handler
@@ -16,7 +18,7 @@ SQL;
 	{
 		$db = $this->app->db;
 		$users = $db->query(static::usersQuery);
-		$_ = $w->write(json_encode(['url' => $r->url, 'users' => $users], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+		$_ = $w->write(json_encode(['url' => $r->url, 'users' => $users], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
 	}
 }
 
@@ -41,9 +43,9 @@ SQL;
 		try {
 			$user = $db->query($query);
 		} catch (\Throwable $e) {
-			$_ = $w->write(json_encode(['error' => $e->getMessage()]));
+			$_ = $w->write(json_encode(['error' => $e->getMessage()])."\n");
 		}
-		$_ = $w->write(json_encode(['url' => $r->url, 'user' => $user], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+		$_ = $w->write(json_encode(['url' => $r->url, 'user' => $user], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
 	}
 }
 
@@ -85,7 +87,7 @@ class App implements \http\Handler
 		$router = $this->router;
 
 		$router->get('users/$', fn () => new ReadUserList(app: $app));
-		$router->get('users/(?P<id>\d+)/$', fn (int $id) => new ReadUser(app: $app, id: $id));
+		$router->get('users/(?P<id>\d+)/$', fn (string $id) => new ReadUser(app: $app, id: (int) $id));
 	}
 
 	public function serve(http\ResponseWriter $w, http\Request $r): void
@@ -94,6 +96,7 @@ class App implements \http\Handler
 		$handler->serve($w, $r);
 	}
 }
+
 function main(): void
 {
 	$run = function (): void {
@@ -113,7 +116,7 @@ function main(): void
 	try {
 		$run();
 	} catch (\Throwable $e) {
-		error_log($e);
+		error_log((string) $e);
 		exit(1);
 	}
 }

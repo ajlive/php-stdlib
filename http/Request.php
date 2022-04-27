@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace http;
 
 enum Method: string
@@ -23,7 +25,7 @@ class Request
 		private array $request = [],
 		private array $headers = [],
 	) {
-		if (is_string($this->method)) {
+		if (\is_string($this->method)) {
 			$this->method = Method::from($this->method);
 		}
 	}

@@ -8,7 +8,7 @@ namespace testing;
  * @internal
  * @coversNothing
  */
-class TTest extends T
+final class TTest extends T
 {
 	public function testOutput(): void
 	{
@@ -25,7 +25,7 @@ class TTest extends T
 			'count erred correct' => ['got' => $counts->erred, 'want' => 3],
 		];
 		foreach ($countTests as $name => $tc) {
-			$this->run($name, function () use ($tc) {
+			$this->run($name, function () use ($tc): void {
 				if ($tc['want'] !== $tc['got']) {
 					$this->fatalf('count is off: want: %s, got: %s', $tc['want'], $tc['got']);
 				}
@@ -112,7 +112,7 @@ OUT;
 		// check got wanted ouptut
 		$context = '';
 		$badIndex = 0;
-		for ($i = 0; $i < strlen($want); $i++) {
+		for ($i = 0; $i < \strlen($want); $i++) {
 			$c = $want[$i];
 			$gc = $got[$i];
 			if ($gc !== $c) {
@@ -134,7 +134,7 @@ OUT;
  * @internal
  * @coversNothing
  */
-class _TTest extends T
+final class _TTest extends T
 {
 	public function testPassing(): void
 	{
@@ -160,7 +160,7 @@ class _TTest extends T
 		];
 
 		foreach ($tests as $name => $tc) {
-			$this->run($name, function () use ($tc) {
+			$this->run($name, function () use ($tc): void {
 				$got = explode($tc['sep'], $tc['input']);
 				if ($tc['want'] !== $got) {
 					$this->fatalf('want: %s, got: %s', $tc['want'], $got);
@@ -178,7 +178,7 @@ class _TTest extends T
 		];
 
 		foreach ($tests as $name => $tc) {
-			$this->run($name, function () use ($tc) {
+			$this->run($name, function () use ($tc): void {
 				$got = explode($tc['sep'], $tc['input']);
 				if ($tc['want'] !== $got) {
 					$this->fatalf('want: %s, got: %s', $tc['want'], $got);
@@ -198,7 +198,7 @@ class _TTest extends T
 		];
 
 		foreach ($tests as $name => $tc) {
-			$this->run($name, function () use ($tc) {
+			$this->run($name, function () use ($tc): void {
 				if ($tc instanceof \Throwable) {
 					throw $tc;
 				}
@@ -220,7 +220,7 @@ class _TTest extends T
 		];
 
 		foreach ($tests as $name => $tc) {
-			$this->run($name, function () use ($tc) {
+			$this->run($name, function () use ($tc): void {
 				if ($tc instanceof \Throwable) {
 					throw $tc;
 				}
@@ -248,6 +248,6 @@ class MockLog implements \io\Writer
 	public function write(string $bytes): int
 	{
 		$this->got .= $bytes;
-		return strlen($bytes);
+		return \strlen($bytes);
 	}
 }

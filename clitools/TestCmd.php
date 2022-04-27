@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace clitools;
 
 require_once __DIR__.'/../vendor/autoload.php';
@@ -10,7 +12,7 @@ class TestCmd
 	{
 		global $argv;
 		$args = match (true) {
-			count($argv) > 1 => array_slice($argv, 1),
+			\count($argv) > 1 => \array_slice($argv, 1),
 		default => [],
 		};
 
@@ -32,6 +34,6 @@ class TestCmd
 	}
 }
 
-if (PHP_SAPI === 'cli') {
+if (\PHP_SAPI === 'cli') {
 	TestCmd::run();
 }

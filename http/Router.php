@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace http;
 
 const debug = false;
@@ -26,7 +28,7 @@ class Router
 		$this->postHandlers[$urlPattern] = $hfunc;
 	}
 
-	public function addRoutes(Router $otherRouter): void
+	public function addRoutes(self $otherRouter): void
 	{
 		$root = $otherRouter->urlRoot;
 		foreach ($otherRouter->getHandlers as $urlPattern => $hfunc) {
@@ -46,7 +48,7 @@ class Router
 			$urlPattern = "|^{$this->urlRoot}{$urlPattern}|";
 			if (preg_match($urlPattern, $r->url, $matches)) {
 				foreach ($matches as $k => $v) {
-					if (!is_int($k)) {
+					if (!\is_int($k)) {
 						$args[$k] = $v;
 					}
 				}

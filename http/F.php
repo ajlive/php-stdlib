@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace http;
 
 abstract class F
@@ -7,11 +9,11 @@ abstract class F
 	public static function serveRoutes(Router $router, Request $r): void
 	{
 		$handler = $router->findHandler($r);
-		if (is_null($handler)) {
+		if (null === $handler) {
 			throw new \Exception("no handler for url \"{$r->url}\"");
 		}
 		$w = $handler->server->w ?? null;
-		if (is_null($w)) {
+		if (null === $w) {
 			$w = new DefaultResponseWriter([]);
 		}
 		$handler->serve($w, $r);
@@ -46,7 +48,7 @@ class DefaultResponseWriter implements ResponseWriter
 	public function write(string $bytes): int
 	{
 		echo $bytes;
-		return strlen($bytes);
+		return \strlen($bytes);
 	}
 }
 

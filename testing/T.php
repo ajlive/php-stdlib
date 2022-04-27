@@ -21,11 +21,11 @@ class T
 	) {
 	}
 
-	public function fatalf(string $format, ...$vs)
+	public function fatalf(string $format, ...$vs): void
 	{
 		$jsonVs = [];
 		foreach ($vs as $v) {
-			if (is_string($v)) {
+			if (\is_string($v)) {
 				$jsonVs[] = $v;
 			} else {
 				$jsonV = json_encode($v);
@@ -59,7 +59,7 @@ class T
 		$workdir = getcwd();
 
 		foreach (get_class_methods(static::class) as $method) {
-			if (0 !== strpos($method, 'test')) {
+			if (!str_starts_with($method, 'test')) {
 				// skipping non-test method
 				continue;
 			}
@@ -118,7 +118,7 @@ class T
 		// print failures
 		$indent = static::indent;
 		$classParts = explode('\\', static::class);
-		$relativeClass = implode('\\', array_slice($classParts, 1, count($classParts) - 1));
+		$relativeClass = implode('\\', \array_slice($classParts, 1, \count($classParts) - 1));
 		$this->log(sprintf("--- %s %s\n", $this->emph('FAIL:'), $relativeClass));
 		foreach ($this->failures as $method => $testFailures) {
 			$hasError = false;
@@ -149,16 +149,16 @@ class T
 				foreach ($trace as $_ => $tentry) {
 					$replaceCount = 1;
 					$file = $tentry['file'];
-					if (0 === strpos($file, $workdir)) {
+					if (str_starts_with($file, $workdir)) {
 						$file = str_replace($workdir, '', $tentry['file'], $replaceCount);
 					}
 					$file = trim($file, '/');
-					if (0 === strpos($file, $this->rootPath)) {
+					if (str_starts_with($file, $this->rootPath)) {
 						$file = str_replace($this->rootPath, '', $file, $replaceCount);
 					}
 					$file = trim($file, '/');
 					$line = $tentry['line'];
-					if (false === strpos($file, 'testing.php')) {
+					if (!str_contains($file, 'testing.php')) {
 						break;
 					}
 				}
