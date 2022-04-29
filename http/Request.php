@@ -15,15 +15,15 @@ enum Method: string
 class Request
 {
 	public function __construct(
-		public Method|string $method,
-		public string $url,
-		public string $queryString = '',
+		public readonly Method|string $method,
+		public readonly string $url,
+		public readonly string $queryString = '',
 		// ---
 		// private
-		private array $get = [],
-		private array $post = [],
-		private array $request = [],
-		private array $headers = [],
+		private readonly array $get = [],
+		private readonly array $post = [],
+		private readonly array $request = [],
+		private readonly array $headers = [],
 	) {
 		if (\is_string($this->method)) {
 			$this->method = Method::from($this->method);
