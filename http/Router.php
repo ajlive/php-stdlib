@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace http;
 
+use errors\Fatal;
+
 const debug = false;
 
 class Router
@@ -18,14 +20,14 @@ class Router
 	) {
 	}
 
-	public function get(string $urlPattern, \Closure $hfunc): void
+	public function get(string $urlPattern, Handler $h): void
 	{
-		$this->getHandlers[$urlPattern] = $hfunc;
+		$this->getHandlers[$urlPattern] = $h;
 	}
 
-	public function post(string $urlPattern, \Closure $hfunc): void
+	public function post(string $urlPattern, Handler $h): void
 	{
-		$this->postHandlers[$urlPattern] = $hfunc;
+		$this->postHandlers[$urlPattern] = $h;
 	}
 
 	public function addRoutes(self $otherRouter): void
@@ -44,16 +46,21 @@ class Router
 		$handler = null;
 		$args = [];
 		$methodHandlers = Method::GET === $r->method ? $this->getHandlers : $this->postHandlers;
-		foreach ($methodHandlers as $urlPattern => $hfunc) {
+		foreach ($methodHandlers as $urlPattern => $h) {
 			$urlPattern = "|^{$this->urlRoot}{$urlPattern}|";
-			if (preg_match($urlPattern, $r->url, $matches)) {
+			$urlDoesMatch = preg_match($urlPattern, $r->url, $matches);
+			if (PREG_NO_ERROR !== preg_last_error()) {
+				throw new Fatal(sprintf('%s, pattern: "%s", url: "%s"', error_get_last()['message'], $urlPattern, $r->url));
+			}
+			if ($urlDoesMatch) {
+				debug && error_log(sprintf('match found: url: "%s", urlPattern: "%s", args: %s', $r->url, $urlPattern, json_encode($args)));
 				foreach ($matches as $k => $v) {
 					if (!\is_int($k)) {
 						$args[$k] = $v;
 					}
 				}
-				debug && error_log(sprintf('match found: url: "%s", urlPattern: "%s", args: %s', $r->url, $urlPattern, json_encode($args)));
-				$handler = $hfunc(...$args);
+				$r->setArgs($args);
+				$handler = $h;
 				break;
 			}
 			debug && error_log(sprintf('not a match: url: "%s", urlPattern: "%s"', $r->url, $urlPattern));

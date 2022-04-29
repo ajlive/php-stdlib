@@ -30,16 +30,15 @@ select *
  where id = %d
 SQL;
 
-	public function __construct(
-		private readonly App $app,
-		private readonly int $id,
-	) {
+	public function __construct(private readonly App $app)
+	{
 	}
 
 	public function serve(http\ResponseWriter $w, http\Request $r): void
 	{
 		$db = $this->app->db;
-		$query = sprintf(static::userQuery, $this->id);
+		['id' => $id] = $r->args;
+		$query = sprintf(static::userQuery, $id);
 		try {
 			$user = $db->query($query);
 		} catch (\Throwable $e) {
@@ -86,8 +85,8 @@ class App implements \http\Handler
 		$app = $this;
 		$router = $this->router;
 
-		$router->get('users/$', fn () => new ReadUserList(app: $app));
-		$router->get('users/(?P<id>\d+)/$', fn (string $id) => new ReadUser(app: $app, id: (int) $id));
+		$router->get('users/$', new ReadUserList(app: $app));
+		$router->get('users/(?P<id>\d+)/$', new ReadUser(app: $app));
 	}
 
 	public function serve(http\ResponseWriter $w, http\Request $r): void
