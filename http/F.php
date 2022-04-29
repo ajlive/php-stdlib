@@ -23,6 +23,11 @@ abstract class F
 	{
 		return new MadeResponseWriter($w, []);
 	}
+
+	public static function makeHandler(\Closure $handlerFunc): Handler
+	{
+		return new MadeHandler($handlerFunc);
+	}
 }
 
 class DefaultResponseWriter implements ResponseWriter
@@ -78,5 +83,19 @@ class MadeResponseWriter implements ResponseWriter
 	public function write(string $bytes): int
 	{
 		return $this->w->write($bytes);
+	}
+}
+
+class MadeHandler implements Handler
+{
+	public function __construct(
+		private \Closure $handlerFunc,
+	) {
+	}
+
+	public function serve(ResponseWriter $w, Request $r): void
+	{
+		$handlerFunc = $this->handlerFunc;
+		$handlerFunc($w, $r);
 	}
 }
