@@ -14,8 +14,10 @@ enum Method: string
 
 class Request
 {
+	public readonly Method $method;
+
 	public function __construct(
-		public readonly Method|string $method,
+		Method|string $method,
 		public readonly string $url,
 		public readonly string $queryString = '',
 		// ---
@@ -25,9 +27,10 @@ class Request
 		private readonly array $request = [],
 		private readonly array $headers = [],
 	) {
-		if (\is_string($this->method)) {
-			$this->method = Method::from($this->method);
+		if (\is_string($method)) {
+			$method = Method::from($method);
 		}
+		$this->method = $method;
 	}
 
 	public static function fromApache(): static
