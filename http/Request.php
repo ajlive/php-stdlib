@@ -15,6 +15,7 @@ enum Method: string
 class Request
 {
 	public readonly Method $method;
+	public readonly array $args;
 
 	public function __construct(
 		Method|string $method,
@@ -44,6 +45,11 @@ class Request
 			request: $_REQUEST,
 			headers: getallheaders(),
 		);
+	}
+
+	public function setArgs(array $args): void
+	{
+		$this->args = $args;
 	}
 
 	public function getVal(string $name): string|array|null
