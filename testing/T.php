@@ -16,6 +16,7 @@ class T
 	public function __construct(
 		protected readonly string $rootPath,
 		protected readonly \io\Writer $logger,
+		protected readonly ResultsCollector $resultsCollector,
 		protected readonly Counts $counts,
 		protected readonly bool $verbose,
 	) {
@@ -83,38 +84,38 @@ class T
 					case $this->subtestFailed && $this->subtestFailedWithError:
 						$this->counts->erred++;
 						if ($verbose) {
-							$this->log("E    {$method}\n");
+							$this->logNow("E    {$method}\n");
 						} else {
-							$this->log('E');
+							$this->logNow('E');
 						}
 						break;
 					case $this->subtestFailed:
 						$this->counts->failed++;
 						if ($verbose) {
-							$this->log("F    {$method}\n");
+							$this->logNow("F    {$method}\n");
 						} else {
-							$this->log('F');
+							$this->logNow('F');
 						}
+
 						break;
 					default:
 						$this->counts->passed++;
 						if ($verbose) {
-							$this->log("ok   {$method}\n");
+							$this->logNow("ok   {$method}\n");
 						} else {
-							$this->log('.');
+							$this->logNow('.');
 						}
 				}
 			} catch (Failure $f) {
 				$this->failures[$method][] = $f;
 				$this->counts->failed++;
-				$this->log('F');
+				$this->logNow('F');
 			} catch (\Throwable $e) {
 				$this->failures[$method][] = new Failure('', $e->getMessage(), $e, false);
 				$this->counts->erred++;
-				$this->log('E');
+				$this->logNow('E');
 			}
 		}
-		$this->log("\n");
 
 		if ([] === $this->failures) {
 			return $this->counts;
@@ -124,7 +125,7 @@ class T
 		$indent = static::indent;
 		$classParts = explode('\\', static::class);
 		$relativeClass = implode('\\', \array_slice($classParts, 1, \count($classParts) - 1));
-		$this->log(sprintf("--- %s %s\n", $this->emph('FAIL:'), $relativeClass));
+		$this->collectResults(sprintf("--- %s %s\n", $this->emph('FAIL:'), $relativeClass));
 		foreach ($this->failures as $method => $testFailures) {
 			$hasError = false;
 			foreach ($testFailures as $f) {
@@ -135,13 +136,13 @@ class T
 			}
 			$prefix = $hasError ? 'ERROR' : 'FAIL';
 
-			$this->log(sprintf("%s--- %s %s\n", $indent, $this->emph("{$prefix}:"), $method));
+			$this->collectResults(sprintf("%s--- %s %s\n", $indent, $this->emph("{$prefix}:"), $method));
 
 			foreach ($testFailures as $f) {
 				if ($f->isSubtest) {
 					$prefix = $f->err ? 'ERROR' : 'FAIL';
 					$testHeader = sprintf('%s%s--- %s %s/%s', $indent, $indent, $this->emph("{$prefix}:"), $method, $f->testName);
-					$this->log("{$testHeader}\n");
+					$this->collectResults("{$testHeader}\n");
 				}
 
 				$trace = $f->getTrace();
@@ -191,7 +192,7 @@ class T
 				}
 
 				$msg = implode("\n", $msgLinesWithIndent);
-				$this->log("{$indent}{$msg}\n");
+				$this->collectResults("{$indent}{$msg}\n");
 			}
 		}
 
@@ -203,9 +204,14 @@ class T
 		return "\033[1m{$msg}\033[m";
 	}
 
-	private function log(string $msg): void
+	private function logNow(string $msg): void
 	{
 		$this->logger->write($msg);
+	}
+
+	private function collectResults(string $msg): void
+	{
+		$this->resultsCollector->write($msg);
 	}
 }
 

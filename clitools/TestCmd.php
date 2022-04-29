@@ -29,7 +29,7 @@ class TestCmd
 		if ([] === $paths) {
 			$paths = ['.'];
 		}
-		$run = new \testing\Runner(new \io\Stdout(), $verbose);
+		$run = new \testing\Runner(new \io\Stdout(), new \testing\ResultsCollector(), $verbose);
 		$run->all(...$paths);
 	}
 }

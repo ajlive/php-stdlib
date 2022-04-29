@@ -8,6 +8,7 @@ class Runner
 {
 	public function __construct(
 		private \io\Writer $logger,
+		private ResultsCollector $resultsCollector,
 		private bool $verbose,
 	) {
 	}
@@ -47,19 +48,22 @@ class Runner
 			}
 
 			if (is_subclass_of($class, T::class, true)) {
-				$test = new $class($path, $this->logger, $counts, $verbose);
+				$test = new $class($path, $this->logger, $this->resultsCollector, $counts, $verbose);
 				$counts = $test->runTestMethods();
 			}
 		}
 
 		// print summary
-		$this->logger->write(sprintf(
-			"%s tests; %s passed; %s failed; %s erred\n",
+		$this->resultsCollector->write(sprintf(
+			"\n%s tests; %s passed; %s failed; %s erred\n",
 			$counts->passed + $counts->failed + $counts->erred,
 			$counts->passed,
 			$counts->failed,
 			$counts->erred
 		));
+
+		$results = $this->resultsCollector->getResults();
+		$this->logger->write("\n\n{$results}");
 	}
 }
 
