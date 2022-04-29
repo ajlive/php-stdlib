@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace http\test;
 
+use errors\Fatal;
 use http\DefaultResponseWriter;
 use http\Request;
 use http\ResponseWriter;
@@ -44,10 +45,7 @@ final class Router_test extends T
 		$router = new Router('/app/');
 		$router->get('login/$', \http\F::makeHandler(handleLogin(...)));
 		$routerAPI = new Router('api');
-		$routerAPI->get('users/(?P<id>\d+)/$', \http\F::makeHandler(function (ResponseWriter $w, Request $r): void {
-			['id' => $id] = $r->args;
-			$w->write("got user with id {$id}");
-		}));
+		$routerAPI->get('users/(?P<id>\d+)/$', \http\F::makeHandler(handleUserByID(...)));
 
 		$router->addRoutes($routerAPI);
 
@@ -65,11 +63,42 @@ final class Router_test extends T
 			$this->fatalf('wanted: %s, got: %s', T::enc($want), T::enc($got));
 		}
 	}
+
+	public function testBadUrlPattern(): void
+	{
+		$router = new Router('/');
+		$badPattern = 'users/(?P<id\d+)/$'; // missing terminator ">" after "<id"
+		$router->get($badPattern, \http\F::makeHandler(handleUserByID(...)));
+
+		// turn off warnings to suppress preg_match in stdout
+		$errorLevel = error_reporting();
+		error_reporting(0);
+
+		try {
+			$router->findHandler(new Request('GET', '/login/'));
+			$this->fatalf('should have thrown %s for bad url pattern "%s"', Fatal::class, $badPattern);
+		} catch (Fatal $e) {
+			$want = 'syntax error in subpattern name (missing terminator?)';
+			$got = $e->getMessage();
+			if (!str_contains($got, $want)) {
+				$this->fatalf('wanted error message containing: %s, got: %s', T::enc($want), T::enc($got));
+			}
+		} finally {
+			// set error level back to previous level
+			error_reporting($errorLevel);
+		}
+	}
 }
 
 function handleLogin(ResponseWriter $w, Request $r): void
 {
 	$w->write("logging in at '{$r->url}'");
+}
+
+function handleUserByID(ResponseWriter $w, Request $r): void
+{
+	['id' => $id] = $r->args;
+	$w->write("got user with id {$id}");
 }
 
 function servedOutput(Router $router, Request $r): string
