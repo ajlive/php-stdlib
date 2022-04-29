@@ -37,6 +37,11 @@ class T
 		throw new Failure('', sprintf($format, ...$jsonVs), null, false);
 	}
 
+	public static function enc(string $msg): string
+	{
+		return json_encode($msg, JSON_UNESCAPED_SLASHES);
+	}
+
 	public function run(string $testName, callable $testfunc): void
 	{
 		try {

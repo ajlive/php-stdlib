@@ -8,12 +8,13 @@ use http\DefaultResponseWriter;
 use http\Request;
 use http\ResponseWriter;
 use http\Router;
+use testing\T;
 
 /**
  * @internal
  * @coversNothing
  */
-final class Router_test extends \testing\T
+final class Router_test extends T
 {
 	public function testRoute(): void
 	{
@@ -23,7 +24,7 @@ final class Router_test extends \testing\T
 		$got = servedOutput($router, $r);
 		$want = "logging in at '/login/'";
 		if ($got !== $want) {
-			$this->fatalf('wanted: %s, got: %s', enc($want), enc($got));
+			$this->fatalf('wanted: %s, got: %s', T::enc($want), T::enc($got));
 		}
 	}
 
@@ -54,14 +55,14 @@ final class Router_test extends \testing\T
 		$got = servedOutput($router, $r);
 		$want = "logging in at '/app/login/'";
 		if ($got !== $want) {
-			$this->fatalf('wanted: %s, got: %s', enc($want), enc($got));
+			$this->fatalf('wanted: %s, got: %s', T::enc($want), T::enc($got));
 		}
 
 		$r = new Request('GET', '/app/api/users/42/');
 		$got = servedOutput($router, $r);
 		$want = 'got user with id 42';
 		if ($got !== $want) {
-			$this->fatalf('wanted: %s, got: %s', enc($want), enc($got));
+			$this->fatalf('wanted: %s, got: %s', T::enc($want), T::enc($got));
 		}
 	}
 }
@@ -69,11 +70,6 @@ final class Router_test extends \testing\T
 function handleLogin(ResponseWriter $w, Request $r): void
 {
 	$w->write("logging in at '{$r->url}'");
-}
-
-function enc(string $msg): string
-{
-	return json_encode($msg, JSON_UNESCAPED_SLASHES);
 }
 
 function servedOutput(Router $router, Request $r): string
