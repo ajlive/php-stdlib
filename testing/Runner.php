@@ -21,6 +21,13 @@ class Runner
 
 		$testClassFiles = [];
 		foreach ($paths as $path) {
+			if (!file_exists($path)) {
+				throw new \Exception("path does not exist: {$path}");
+			}
+			if (str_ends_with($path, '.php') && !\in_array($path, $testClassFiles, true)) {
+				$testClassFiles[] = $path;
+				continue;
+			}
 			$testPaths = testFiles($path);
 			foreach ($testPaths as $testPath) {
 				if (!\in_array($testPath, $testClassFiles, true)) {
@@ -30,7 +37,7 @@ class Runner
 		}
 		sort($testClassFiles);
 
-		if (!$testClassFiles) {
+		if ([] === $testClassFiles) {
 			$this->logger->write("no _test.php files in {$path}\n");
 			return;
 		}
@@ -53,17 +60,26 @@ class Runner
 			}
 		}
 
+		$results = $this->resultsCollector->getResults();
+
+		if ('' !== $results) {
+			if (!$this->verbose) {
+				$this->logger->write("\n");
+			}
+			$this->logger->write("\n{$results}");
+		}
+
 		// print summary
-		$this->resultsCollector->write(sprintf(
+		if ('' === $results && !$verbose) {
+			$this->logger->write("\n");
+		}
+		$this->logger->write(sprintf(
 			"\n%s tests; %s passed; %s failed; %s erred\n",
 			$counts->passed + $counts->failed + $counts->erred,
 			$counts->passed,
 			$counts->failed,
 			$counts->erred
 		));
-
-		$results = $this->resultsCollector->getResults();
-		$this->logger->write("\n\n{$results}");
 	}
 }
 

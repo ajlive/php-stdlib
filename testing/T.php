@@ -62,14 +62,29 @@ class T
 
 	public function runTestMethods(): Counts
 	{
+		$verbose = $this->verbose;
 		$workdir = getcwd();
+		$r = new \ReflectionClass(static::class);
+		$testMethods = array_filter(get_class_methods($this), fn ($m) => str_starts_with($m, 'test'));
 
-		foreach (get_class_methods(static::class) as $method) {
-			if (!str_starts_with($method, 'test')) {
-				// skipping non-test method
-				continue;
+		$methodPath = fn (string $method): string => sprintf('%s::%s', $r->getName(), $method);
+
+		// $maxMethodPathLen = array_reduce($testMethods, fn (string|null $carry, string $item) => (\strlen($item) > \strlen($carry) ? $item : $carry));
+		$maxMethodPathLen = 0;
+		foreach ($testMethods as $m) {
+			$mPathLen = \strlen($methodPath($m));
+			if ($mPathLen > $maxMethodPathLen) {
+				$maxMethodPathLen = $mPathLen;
 			}
+		}
 
+		$logShortVerbose = function (string $result, string $method) use ($r, $methodPath, $maxMethodPathLen): void {
+			$fileRelPath = ltrim(str_replace(getcwd(), '', $r->getFileName()), '/');
+			$msg = sprintf("%s%s(%s)\n", str_pad($result, 5), str_pad($methodPath($method), $maxMethodPathLen + 1), $fileRelPath);
+			$this->logNow($msg);
+		};
+
+		foreach ($testMethods as $method) {
 			$this->subtestFailed = false;
 			$this->subtestFailedWithError = false;
 
@@ -78,13 +93,11 @@ class T
 			// run method, catch Failures and other errors
 			try {
 				$this->{$method}();
-
-				$verbose = $this->verbose;
 				switch (true) {
 					case $this->subtestFailed && $this->subtestFailedWithError:
 						$this->counts->erred++;
 						if ($verbose) {
-							$this->logNow("E    {$method}\n");
+							$logShortVerbose('err', $method);
 						} else {
 							$this->logNow('E');
 						}
@@ -92,7 +105,7 @@ class T
 					case $this->subtestFailed:
 						$this->counts->failed++;
 						if ($verbose) {
-							$this->logNow("F    {$method}\n");
+							$logShortVerbose('fail', $method);
 						} else {
 							$this->logNow('F');
 						}
@@ -101,7 +114,7 @@ class T
 					default:
 						$this->counts->passed++;
 						if ($verbose) {
-							$this->logNow("ok   {$method}\n");
+							$logShortVerbose('ok', $method);
 						} else {
 							$this->logNow('.');
 						}
@@ -109,11 +122,19 @@ class T
 			} catch (Failure $f) {
 				$this->failures[$method][] = $f;
 				$this->counts->failed++;
-				$this->logNow('F');
+				if ($verbose) {
+					$logShortVerbose('fail', $method);
+				} else {
+					$this->logNow('F');
+				}
 			} catch (\Throwable $e) {
 				$this->failures[$method][] = new Failure('', $e->getMessage(), $e, false);
 				$this->counts->erred++;
-				$this->logNow('E');
+				if ($verbose) {
+					$logShortVerbose('err', $method);
+				} else {
+					$this->logNow('E');
+				}
 			}
 		}
 
@@ -212,6 +233,41 @@ class T
 	private function collectResults(string $msg): void
 	{
 		$this->resultsCollector->write($msg);
+	}
+
+	protected function compareCharByChar(string $want, string $got): ?string
+	{
+		$got = preg_replace('/([\(:])\d+/', '$1LN', $got);
+		$got = preg_replace('/\d+([\):])/', 'LN$1', $got);
+		$got = preg_replace('/Runner->all\(.*?\)/', 'Runner->all(PATHS)', $got);
+		$got = trim($got, "\n");
+		// error_log("##\n{$got}\n##");
+		// exit;
+
+		$want = trim($want, "\n");
+		$context = '';
+		$badIndex = 0;
+		for ($i = 0; $i < \strlen($want); $i++) {
+			$c = $want[$i];
+			$gc = $got[$i];
+			if ($gc !== $c) {
+				if (preg_match('/\s/', $gc)) {
+					$gc = json_encode($gc);
+				}
+				if (preg_match('/\s/', $c)) {
+					$c = json_encode($c);
+				}
+				$context = substr($context, -50);
+				$context = "\"{$context}{$gc}\": want: '{$c}', got: '{$gc}'";
+				$badIndex = $i;
+				return sprintf("want:\n%s,\n got:\n%s,\nerror at char {$badIndex}: %s", $want, $got, $context);
+			}
+			if ("\n" === $c) {
+				$c = '\n';
+			}
+			$context .= $c;
+		}
+		return null;
 	}
 }
 

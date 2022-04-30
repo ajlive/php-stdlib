@@ -20,7 +20,7 @@ class TestCmd
 		$paths = [];
 
 		foreach ($args as $arg) {
-			if (false === $verbose && '-v' === $arg) {
+			if (false === $verbose && '--verbose' === $arg || '-v' === $arg) {
 				$verbose = true;
 			} else {
 				$paths[] = $arg;

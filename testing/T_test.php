@@ -2,20 +2,23 @@
 
 declare(strict_types=1);
 
-namespace testing;
+namespace testing\test;
+
+use testing\Counts;
+use testing\ResultsCollector;
+use testing\T;
 
 /**
  * @internal
  * @coversNothing
  */
-final class TTest extends T
+final class T_test extends T
 {
-	public function testOutput(): void
+	public function testCounts(): void
 	{
-		$logger = new MockLog();
-		$ttest = new _TTest('testing/', $logger, new Counts(), $this->verbose);
+		$ttest = new _T_testExampleT('testing/', new T_testLogger(), new ResultsCollector(), new Counts(), false);
 
-		// run _TTest
+		// run tests
 		$counts = $ttest->runTestMethods();
 
 		// check counts are correct
@@ -31,101 +34,122 @@ final class TTest extends T
 				}
 			});
 		}
+	}
 
-		// ---
-		// check output
+	public function testLogging(): void
+	{
+		$logger = new T_testLogger();
+		$ttest = new _T_testExampleT('testing/', $logger, new ResultsCollector(), new Counts(), verbose: false);
 
-		// prepare output for checking
-		$want = <<<'OUT'
-.FEFFEE
---- FAIL: _TTest
-    --- FAIL: testFailure
-        T_test.php:LN: mock ordinary failure
-    --- ERROR: testError
-        Exception: mock error in testing/T_test.php:LN
+		// run tests
+		$ttest->runTestMethods();
+
+		// check logging
+		$want = '.FEFFEE';
+		if ($logger->got !== $want) {
+			$this->fatalf('wanted: %s, got: %s', T::enc($want), T::enc($logger->got));
+		}
+	}
+
+	public function testVerboseLogging(): void
+	{
+		$logger = new T_testLogger();
+		$ttest = new _T_testExampleT('testing/', $logger, new ResultsCollector(), new Counts(), verbose: true);
+
+		// run tests
+		$ttest->runTestMethods();
+
+		// check logging
+		$want = <<<'TXT'
+ok   testing\test\_T_testExampleT::testPassingTestPasses                          (testing/T_test.php)
+fail testing\test\_T_testExampleT::testFailingTestFails                           (testing/T_test.php)
+err  testing\test\_T_testExampleT::testThrowingTestErrs                           (testing/T_test.php)
+fail testing\test\_T_testExampleT::testFailingSubtestFailsTest                    (testing/T_test.php)
+fail testing\test\_T_testExampleT::testFailureOutsideSubtestFailsTest             (testing/T_test.php)
+err  testing\test\_T_testExampleT::testThrowingInSubtestErrsTest                  (testing/T_test.php)
+err  testing\test\_T_testExampleT::testThrowingInSubtestAndOutsideSubtestErrsTest (testing/T_test.php)
+TXT;
+		$got = trim($logger->got, "\n");
+		if ($got !== $want) {
+			$this->fatalf("wanted:\n%s\ngot:\n%s", $want, $logger->got);
+		}
+	}
+
+	public function testResults(): void
+	{
+		$resultsCollector = new ResultsCollector();
+		$ttest = new _T_testExampleT('testing/', new T_testLogger(), $resultsCollector, new Counts(), verbose: true);
+
+		// run tests
+		$ttest->runTestMethods();
+
+		// check logging
+		$want = <<<'TXT'
+--- FAIL: test\_T_testExampleT
+    --- FAIL: testFailingTestFails
+        T_test.php:LN: m'test failed!
+    --- ERROR: testThrowingTestErrs
+        Exception: m'test threw! in testing/T_test.php:LN
         Stack trace:
-        #0 testing/T.php(LN): testing\_TTest->testError()
+        #0 testing/T.php(LN): testing\test\_T_testExampleT->testThrowingTestErrs()
         #1 testing/T_test.php(LN): testing\T->runTestMethods()
-        #2 testing/T.php(LN): testing\TTest->testOutput()
+        #2 testing/T.php(LN): testing\test\T_test->testResults()
         #3 testing/Runner.php(LN): testing\T->runTestMethods()
         #4 clitools/TestCmd.php(LN): testing\Runner->all(PATHS)
         #5 clitools/TestCmd.php(LN): clitools\TestCmd::run()
         #6 {main}
-    --- FAIL: testSubtests
-        --- FAIL: testSubtests/wrong_sep
-            T_test.php:LN: want: ["a","b"], got: ["a/b/c"]
-        --- FAIL: testSubtests/trailing_sep
-            T_test.php:LN: want: ["b"], got: ["a","b","c",""]
-    --- FAIL: testSubtestsAndFailureOutsideSubtest
-        --- FAIL: testSubtestsAndFailureOutsideSubtest/wrong_sep
-            T_test.php:LN: want: ["a","b"], got: ["a/b/c"]
-        --- FAIL: testSubtestsAndFailureOutsideSubtest/trailing_sep
-            T_test.php:LN: want: ["b"], got: ["a","b","c",""]
-        T_test.php:LN: mock failure outside subtest
-    --- ERROR: testErrorInSubtest
-        --- FAIL: testErrorInSubtest/failing_test_1
-            T_test.php:LN: want: ["1","2"], got: ["1","2","3"]
-        --- ERROR: testErrorInSubtest/mock_error_in_subtest
-            Exception: mock error in testing/T_test.php:LN
+    --- FAIL: testFailingSubtestFailsTest
+        --- FAIL: testFailingSubtestFailsTest/failing_subtest_1
+            T_test.php:LN: m'subtest failed!
+        --- FAIL: testFailingSubtestFailsTest/failing_subtest_2
+            T_test.php:LN: m'subtest failed!
+    --- FAIL: testFailureOutsideSubtestFailsTest
+        --- FAIL: testFailureOutsideSubtestFailsTest/failing_subtest
+            T_test.php:LN: m'subtest failed!
+        T_test.php:LN: failed outside subtest
+    --- ERROR: testThrowingInSubtestErrsTest
+        --- ERROR: testThrowingInSubtestErrsTest/error_in_subtest
+            Exception: m'subtest threw! in testing/T_test.php:LN
             Stack trace:
-            #0 testing/T.php(LN): testing\_TTest->testErrorInSubtest()
-            #1 testing/T_test.php(LN): testing\T->runTestMethods()
-            #2 testing/T.php(LN): testing\TTest->testOutput()
-            #3 testing/Runner.php(LN): testing\T->runTestMethods()
-            #4 clitools/TestCmd.php(LN): testing\Runner->all(PATHS)
-            #5 clitools/TestCmd.php(LN): clitools\TestCmd::run()
-            #6 {main}
-        --- FAIL: testErrorInSubtest/faling_test_2
-            T_test.php:LN: want: ["3"], got: ["1","2","3",""]
-    --- ERROR: testErrorInSubtestAndErrorOutsideSubtest
-        --- FAIL: testErrorInSubtestAndErrorOutsideSubtest/failing_test_1
-            T_test.php:LN: want: ["1","2"], got: ["1","2","3"]
-        --- ERROR: testErrorInSubtestAndErrorOutsideSubtest/mock_error_in_subtest
-            Exception: mock error in testing/T_test.php:LN
+            #0 testing/T.php(LN): testing\test\_T_testExampleT->testing\test\{closure}()
+            #1 testing/T_test.php(LN): testing\T->run('error in subtes...', Object(Closure))
+            #2 testing/T.php(LN): testing\test\_T_testExampleT->testThrowingInSubtestErrsTest()
+            #3 testing/T_test.php(LN): testing\T->runTestMethods()
+            #4 testing/T.php(LN): testing\test\T_test->testResults()
+            #5 testing/Runner.php(LN): testing\T->runTestMethods()
+            #6 clitools/TestCmd.php(LN): testing\Runner->all(PATHS)
+            #7 clitools/TestCmd.php(LN): clitools\TestCmd::run()
+            #8 {main}
+    --- ERROR: testThrowingInSubtestAndOutsideSubtestErrsTest
+        --- ERROR: testThrowingInSubtestAndOutsideSubtestErrsTest/error_in_subtest
+            Exception: m'subtest threw! in testing/T_test.php:LN
             Stack trace:
-            #0 testing/T.php(LN): testing\_TTest->testErrorInSubtestAndErrorOutsideSubtest()
-            #1 testing/T_test.php(LN): testing\T->runTestMethods()
-            #2 testing/T.php(LN): testing\TTest->testOutput()
-            #3 testing/Runner.php(LN): testing\T->runTestMethods()
-            #4 clitools/TestCmd.php(LN): testing\Runner->all(PATHS)
-            #5 clitools/TestCmd.php(LN): clitools\TestCmd::run()
-            #6 {main}
-        --- FAIL: testErrorInSubtestAndErrorOutsideSubtest/faling_test_2
-            T_test.php:LN: want: ["3"], got: ["1","2","3",""]
-        Exception: mock error in testing/T_test.php:LN
+            #0 testing/T.php(LN): testing\test\_T_testExampleT->testing\test\{closure}()
+            #1 testing/T_test.php(LN): testing\T->run('error in subtes...', Object(Closure))
+            #2 testing/T.php(LN): testing\test\_T_testExampleT->testThrowingInSubtestAndOutsideSubtestErrsTest()
+            #3 testing/T_test.php(LN): testing\T->runTestMethods()
+            #4 testing/T.php(LN): testing\test\T_test->testResults()
+            #5 testing/Runner.php(LN): testing\T->runTestMethods()
+            #6 clitools/TestCmd.php(LN): testing\Runner->all(PATHS)
+            #7 clitools/TestCmd.php(LN): clitools\TestCmd::run()
+            #8 {main}
+        Exception: then m'test threw outside the subtest! in testing/T_test.php:LN
         Stack trace:
-        #0 testing/T.php(LN): testing\_TTest->testErrorInSubtestAndErrorOutsideSubtest()
+        #0 testing/T.php(LN): testing\test\_T_testExampleT->testThrowingInSubtestAndOutsideSubtestErrsTest()
         #1 testing/T_test.php(LN): testing\T->runTestMethods()
-        #2 testing/T.php(LN): testing\TTest->testOutput()
+        #2 testing/T.php(LN): testing\test\T_test->testResults()
         #3 testing/Runner.php(LN): testing\T->runTestMethods()
         #4 clitools/TestCmd.php(LN): testing\Runner->all(PATHS)
         #5 clitools/TestCmd.php(LN): clitools\TestCmd::run()
         #6 {main}
-OUT;
-		$got = preg_replace('/([\(:])\d+/', '$1LN', $logger->got);
-		$got = preg_replace('/\d+([\):])/', 'LN$1', $got);
-		$got = preg_replace('/Runner->all\(.*?\)/', 'Runner->all(PATHS)', $got);
-		$got = trim($got);
+TXT;
 
-		$want = trim($want);
+		// check results
 
 		// check got wanted ouptut
-		$context = '';
-		$badIndex = 0;
-		for ($i = 0; $i < \strlen($want); $i++) {
-			$c = $want[$i];
-			$gc = $got[$i];
-			if ($gc !== $c) {
-				$context = substr($context, -50);
-				$context = "\"{$context}{$gc}\": want: '{$c}', got: '{$gc}'";
-				$badIndex = $i;
-				$this->fatalf("want:\n%s,\n got:\n%s,\nerror at char {$badIndex}: %s", $want, $got, $context);
-				break;
-			}
-			if ("\n" === $c) {
-				$c = '\n';
-			}
-			$context .= $c;
+		$failureMsg = $this->compareCharByChar(want: $want, got: $resultsCollector->getResults());
+		if (null !== $failureMsg) {
+			$this->fatalf($failureMsg);
 		}
 	}
 }
@@ -134,105 +158,52 @@ OUT;
  * @internal
  * @coversNothing
  */
-final class _TTest extends T
+final class _T_testExampleT extends T
 {
-	public function testPassing(): void
+	public function testPassingTestPasses(): void
 	{
 		// passed
 	}
 
-	public function testFailure(): void
+	public function testFailingTestFails(): void
 	{
-		$this->fatalf('mock ordinary failure');
+		$this->fatalf("m'test failed!");
 	}
 
-	public function testError(): void
+	public function testThrowingTestErrs(): void
 	{
-		throw new \Exception('mock error');
+		throw new \Exception("m'test threw!");
 	}
 
-	public function testSubtests(): void
+	public function testFailingSubtestFailsTest(): void
 	{
 		$tests = [
-			'simple' => ['input' => 'a/b/c', 'sep' => '/', 'want' => ['a', 'b', 'c']],
-			'wrong sep' => ['input' => 'a/b/c', 'sep' => ',', 'want' => ['a', 'b']],
-			'trailing sep' => ['input' => 'a/b/c/', 'sep' => '/', 'want' => ['b']],
+			'passing subtest' => true,
+			'failing subtest 1' => false,
+			'failing subtest 2' => false,
 		];
 
-		foreach ($tests as $name => $tc) {
-			$this->run($name, function () use ($tc): void {
-				$got = explode($tc['sep'], $tc['input']);
-				if ($tc['want'] !== $got) {
-					$this->fatalf('want: %s, got: %s', $tc['want'], $got);
-				}
-			});
+		foreach ($tests as $name => $passed) {
+			$this->run($name, fn () => $passed ? true : $this->fatalf("m'subtest failed!"));
 		}
 	}
 
-	public function testSubtestsAndFailureOutsideSubtest(): void
+	public function testFailureOutsideSubtestFailsTest(): void
 	{
-		$tests = [
-			'simple' => ['input' => 'a/b/c', 'sep' => '/', 'want' => ['a', 'b', 'c']],
-			'wrong sep' => ['input' => 'a/b/c', 'sep' => ',', 'want' => ['a', 'b']],
-			'trailing sep' => ['input' => 'a/b/c/', 'sep' => '/', 'want' => ['b']],
-		];
-
-		foreach ($tests as $name => $tc) {
-			$this->run($name, function () use ($tc): void {
-				$got = explode($tc['sep'], $tc['input']);
-				if ($tc['want'] !== $got) {
-					$this->fatalf('want: %s, got: %s', $tc['want'], $got);
-				}
-			});
-		}
-
-		$this->fatalf('mock failure outside subtest');
+		$this->run('passing subtest', fn () => true);
+		$this->run('failing subtest', fn () => $this->fatalf("m'subtest failed!"));
+		$this->fatalf('failed outside subtest');
 	}
 
-	public function testErrorInSubtest(): void
+	public function testThrowingInSubtestErrsTest(): void
 	{
-		$tests = [
-			'failing test 1' => ['input' => '1|2|3', 'sep' => '|', 'want' => ['1', '2']],
-			'mock error in subtest' => new \Exception('mock error'),
-			'faling test 2' => ['input' => '1|2|3|', 'sep' => '|', 'want' => ['3']],
-		];
-
-		foreach ($tests as $name => $tc) {
-			$this->run($name, function () use ($tc): void {
-				if ($tc instanceof \Throwable) {
-					throw $tc;
-				}
-
-				$got = explode($tc['sep'], $tc['input']);
-				if ($tc['want'] !== $got) {
-					$this->fatalf('want: %s, got: %s', $tc['want'], $got);
-				}
-			});
-		}
+		$this->run('error in subtest', fn () => throw new \Exception("m'subtest threw!"));
 	}
 
-	public function testErrorInSubtestAndErrorOutsideSubtest(): void
+	public function testThrowingInSubtestAndOutsideSubtestErrsTest(): void
 	{
-		$tests = [
-			'failing test 1' => ['input' => '1|2|3', 'sep' => '|', 'want' => ['1', '2']],
-			'mock error in subtest' => new \Exception('mock error'),
-			'faling test 2' => ['input' => '1|2|3|', 'sep' => '|', 'want' => ['3']],
-		];
-
-		foreach ($tests as $name => $tc) {
-			$this->run($name, function () use ($tc): void {
-				if ($tc instanceof \Throwable) {
-					throw $tc;
-				}
-
-				$got = explode($tc['sep'], $tc['input']);
-				if ($tc['want'] !== $got) {
-					$this->fatalf('want: %s, got: %s', $tc['want'], $got);
-				}
-			});
-		}
-
-		throw new \Exception('mock error');
+		$this->run('error in subtest', fn () => throw new \Exception("m'subtest threw!"));
+		throw new \Exception("then m'test threw outside the subtest!");
 	}
 
 	protected function emph(string $msg): string
@@ -241,7 +212,7 @@ final class _TTest extends T
 	}
 }
 
-class MockLog implements \io\Writer
+class T_testLogger implements \io\Writer
 {
 	public $got = '';
 
