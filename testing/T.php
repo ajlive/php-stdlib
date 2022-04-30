@@ -14,7 +14,6 @@ class T
 	private bool $subtestFailedWithError;
 
 	public function __construct(
-		protected readonly string $rootPath,
 		protected readonly \io\Writer $logger,
 		protected readonly ResultsCollector $resultsCollector,
 		protected readonly Counts $counts,
@@ -69,7 +68,6 @@ class T
 
 		$methodPath = fn (string $method): string => sprintf('%s::%s', $r->getName(), $method);
 
-		// $maxMethodPathLen = array_reduce($testMethods, fn (string|null $carry, string $item) => (\strlen($item) > \strlen($carry) ? $item : $carry));
 		$maxMethodPathLen = 0;
 		foreach ($testMethods as $m) {
 			$mPathLen = \strlen($methodPath($m));
@@ -144,9 +142,7 @@ class T
 
 		// print failures
 		$indent = static::indent;
-		$classParts = explode('\\', static::class);
-		$relativeClass = implode('\\', \array_slice($classParts, 1, \count($classParts) - 1));
-		$this->collectResults(sprintf("--- %s %s\n", $this->emph('FAIL:'), $relativeClass));
+		$this->collectResults(sprintf("--- %s %s\n", $this->emph('FAIL:'), static::class));
 		foreach ($this->failures as $method => $testFailures) {
 			$hasError = false;
 			foreach ($testFailures as $f) {
@@ -180,9 +176,6 @@ class T
 						$file = str_replace($workdir, '', $tentry['file'], $replaceCount);
 					}
 					$file = trim($file, '/');
-					if (str_starts_with($file, $this->rootPath)) {
-						$file = str_replace($this->rootPath, '', $file, $replaceCount);
-					}
 					$file = trim($file, '/');
 					$line = $tentry['line'];
 					if (!str_contains($file, 'testing.php')) {
@@ -192,7 +185,6 @@ class T
 
 				$msg = sprintf('%s:%s: %s', $file, $line, $f->getMessage());
 				if ($f->err) {
-					// $msg = sprintf('%s:%s: %s', $f->err->getFile(), $f->err->getLine(), trim((string) $f->err));
 					$msg = trim((string) $f->err);
 				}
 
@@ -235,16 +227,38 @@ class T
 		$this->resultsCollector->write($msg);
 	}
 
+	protected function compareLineByLine(string $want, string $got): ?string
+	{
+		$wlines = explode("\n", $want);
+		$glines = explode("\n", $got);
+		$numG = \count($glines);
+		$numW = \count($wlines);
+		if ($numG > $numW) {
+			$extraLines = \array_slice($glines, $numW, $numG - 1);
+			$extraLines = array_map(fn ($l) => "\"{$l}\"", $extraLines);
+			$wMaxLineLen = array_reduce(array_merge($wlines, $glines), fn ($a, $b) => (null !== $a && $a > \strlen($b)) ? $a : \strlen($b));
+			$sep = str_repeat('-', $wMaxLineLen);
+			return sprintf("got extra lines:\n%s\nwant:\n{$sep}\n%s\n{$sep}\ngot:\n{$sep}\n%s\n{$sep}", implode("\n", $extraLines), preg_replace('/\n/', "⏎\n", $want), preg_replace('/\n/', "⏎\n", $got));
+		}
+		if ($numW > $numG) {
+			$missingLines = \array_slice($wlines, $numG, $numW - 1);
+			$missingLines = array_map(fn ($l) => "\"{$l}\"", $missingLines);
+			$wMaxLineLen = array_reduce(array_merge($wlines, $glines), fn ($a, $b) => (null !== $a && $a > \strlen($b)) ? $a : \strlen($b));
+			$sep = str_repeat('-', $wMaxLineLen);
+			return sprintf("got too few lines; missing:\n%s\nwant:\n{$sep}\n%s\n{$sep}\ngot:\n{$sep}\n%s\n{$sep}", implode("\n", $missingLines), preg_replace('/\n/', "⏎\n", $want), preg_replace('/\n/', "⏎\n", $got));
+		}
+		foreach ($glines as $i => $gline) {
+			$wline = $wlines[$i];
+			$failureMsg = $this->compareCharByChar(want: $wline, got: $gline);
+			if (null !== $failureMsg) {
+				return $failureMsg;
+			}
+		}
+		return null;
+	}
+
 	protected function compareCharByChar(string $want, string $got): ?string
 	{
-		$got = preg_replace('/([\(:])\d+/', '$1LN', $got);
-		$got = preg_replace('/\d+([\):])/', 'LN$1', $got);
-		$got = preg_replace('/Runner->all\(.*?\)/', 'Runner->all(PATHS)', $got);
-		$got = trim($got, "\n");
-		// error_log("##\n{$got}\n##");
-		// exit;
-
-		$want = trim($want, "\n");
 		$context = '';
 		$badIndex = 0;
 		for ($i = 0; $i < \strlen($want); $i++) {
@@ -260,7 +274,7 @@ class T
 				$context = substr($context, -50);
 				$context = "\"{$context}{$gc}\": want: '{$c}', got: '{$gc}'";
 				$badIndex = $i;
-				return sprintf("want:\n%s,\n got:\n%s,\nerror at char {$badIndex}: %s", $want, $got, $context);
+				return sprintf("\nwant:\n%s\ngot:\n%s\nerror at char {$badIndex}: %s", $want, $got, $context);
 			}
 			if ("\n" === $c) {
 				$c = '\n';

@@ -16,7 +16,7 @@ final class T_test extends T
 {
 	public function testCounts(): void
 	{
-		$ttest = new _T_testExampleT('testing/', new T_testLogger(), new ResultsCollector(), new Counts(), false);
+		$ttest = new _T_testExampleT(new T_testLogger(), new ResultsCollector(), new Counts(), false);
 
 		// run tests
 		$counts = $ttest->runTestMethods();
@@ -39,7 +39,7 @@ final class T_test extends T
 	public function testLogging(): void
 	{
 		$logger = new T_testLogger();
-		$ttest = new _T_testExampleT('testing/', $logger, new ResultsCollector(), new Counts(), verbose: false);
+		$ttest = new _T_testExampleT($logger, new ResultsCollector(), new Counts(), verbose: false);
 
 		// run tests
 		$ttest->runTestMethods();
@@ -54,7 +54,7 @@ final class T_test extends T
 	public function testVerboseLogging(): void
 	{
 		$logger = new T_testLogger();
-		$ttest = new _T_testExampleT('testing/', $logger, new ResultsCollector(), new Counts(), verbose: true);
+		$ttest = new _T_testExampleT($logger, new ResultsCollector(), new Counts(), verbose: true);
 
 		// run tests
 		$ttest->runTestMethods();
@@ -78,76 +78,52 @@ TXT;
 	public function testResults(): void
 	{
 		$resultsCollector = new ResultsCollector();
-		$ttest = new _T_testExampleT('testing/', new T_testLogger(), $resultsCollector, new Counts(), verbose: true);
+		$ttest = new _T_testExampleT(new T_testLogger(), $resultsCollector, new Counts(), verbose: true);
 
 		// run tests
 		$ttest->runTestMethods();
 
 		// check logging
 		$want = <<<'TXT'
---- FAIL: test\_T_testExampleT
+--- FAIL: testing\test\_T_testExampleT
     --- FAIL: testFailingTestFails
-        T_test.php:LN: m'test failed!
+        testing/T_test.php:LN: m'test failed!
     --- ERROR: testThrowingTestErrs
         Exception: m'test threw! in testing/T_test.php:LN
         Stack trace:
-        #0 testing/T.php(LN): testing\test\_T_testExampleT->testThrowingTestErrs()
-        #1 testing/T_test.php(LN): testing\T->runTestMethods()
-        #2 testing/T.php(LN): testing\test\T_test->testResults()
-        #3 testing/Runner.php(LN): testing\T->runTestMethods()
-        #4 clitools/TestCmd.php(LN): testing\Runner->all(PATHS)
-        #5 clitools/TestCmd.php(LN): clitools\TestCmd::run()
-        #6 {main}
+        #0 ... {main}
     --- FAIL: testFailingSubtestFailsTest
         --- FAIL: testFailingSubtestFailsTest/failing_subtest_1
-            T_test.php:LN: m'subtest failed!
+            testing/T_test.php:LN: m'subtest failed!
         --- FAIL: testFailingSubtestFailsTest/failing_subtest_2
-            T_test.php:LN: m'subtest failed!
+            testing/T_test.php:LN: m'subtest failed!
     --- FAIL: testFailureOutsideSubtestFailsTest
         --- FAIL: testFailureOutsideSubtestFailsTest/failing_subtest
-            T_test.php:LN: m'subtest failed!
-        T_test.php:LN: failed outside subtest
+            testing/T_test.php:LN: m'subtest failed!
+        testing/T_test.php:LN: failed outside subtest
     --- ERROR: testThrowingInSubtestErrsTest
         --- ERROR: testThrowingInSubtestErrsTest/error_in_subtest
             Exception: m'subtest threw! in testing/T_test.php:LN
             Stack trace:
-            #0 testing/T.php(LN): testing\test\_T_testExampleT->testing\test\{closure}()
-            #1 testing/T_test.php(LN): testing\T->run('error in subtes...', Object(Closure))
-            #2 testing/T.php(LN): testing\test\_T_testExampleT->testThrowingInSubtestErrsTest()
-            #3 testing/T_test.php(LN): testing\T->runTestMethods()
-            #4 testing/T.php(LN): testing\test\T_test->testResults()
-            #5 testing/Runner.php(LN): testing\T->runTestMethods()
-            #6 clitools/TestCmd.php(LN): testing\Runner->all(PATHS)
-            #7 clitools/TestCmd.php(LN): clitools\TestCmd::run()
-            #8 {main}
+            #0 ... {main}
     --- ERROR: testThrowingInSubtestAndOutsideSubtestErrsTest
         --- ERROR: testThrowingInSubtestAndOutsideSubtestErrsTest/error_in_subtest
             Exception: m'subtest threw! in testing/T_test.php:LN
             Stack trace:
-            #0 testing/T.php(LN): testing\test\_T_testExampleT->testing\test\{closure}()
-            #1 testing/T_test.php(LN): testing\T->run('error in subtes...', Object(Closure))
-            #2 testing/T.php(LN): testing\test\_T_testExampleT->testThrowingInSubtestAndOutsideSubtestErrsTest()
-            #3 testing/T_test.php(LN): testing\T->runTestMethods()
-            #4 testing/T.php(LN): testing\test\T_test->testResults()
-            #5 testing/Runner.php(LN): testing\T->runTestMethods()
-            #6 clitools/TestCmd.php(LN): testing\Runner->all(PATHS)
-            #7 clitools/TestCmd.php(LN): clitools\TestCmd::run()
-            #8 {main}
+            #0 ... {main}
         Exception: then m'test threw outside the subtest! in testing/T_test.php:LN
         Stack trace:
-        #0 testing/T.php(LN): testing\test\_T_testExampleT->testThrowingInSubtestAndOutsideSubtestErrsTest()
-        #1 testing/T_test.php(LN): testing\T->runTestMethods()
-        #2 testing/T.php(LN): testing\test\T_test->testResults()
-        #3 testing/Runner.php(LN): testing\T->runTestMethods()
-        #4 clitools/TestCmd.php(LN): testing\Runner->all(PATHS)
-        #5 clitools/TestCmd.php(LN): clitools\TestCmd::run()
-        #6 {main}
+        #0 ... {main}
 TXT;
 
 		// check results
 
 		// check got wanted ouptut
-		$failureMsg = $this->compareCharByChar(want: $want, got: $resultsCollector->getResults());
+		$got = $resultsCollector->getResults();
+		$got = rtrim($got, "\n");
+		$got = preg_replace('/#0.*?\{main\}/s', '#0 ... {main}', $got);
+		$got = preg_replace('/([\(:])\d+/', '$1LN', $got);
+		$failureMsg = $this->compareLineByLine(want: $want, got: $got);
 		if (null !== $failureMsg) {
 			$this->fatalf($failureMsg);
 		}

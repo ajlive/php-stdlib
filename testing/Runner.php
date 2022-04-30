@@ -15,16 +15,12 @@ class Runner
 
 	public function all(string ...$paths): void
 	{
-		$verbose = $this->verbose;
-
-		$counts = new Counts();
-
 		$testClassFiles = [];
 		foreach ($paths as $path) {
 			if (!file_exists($path)) {
 				throw new \Exception("path does not exist: {$path}");
 			}
-			if (str_ends_with($path, '.php') && !\in_array($path, $testClassFiles, true)) {
+			if (is_file($path) && str_ends_with($path, '_test.php') && !\in_array($path, $testClassFiles, true)) {
 				$testClassFiles[] = $path;
 				continue;
 			}
@@ -36,26 +32,34 @@ class Runner
 			}
 		}
 		sort($testClassFiles);
-
 		if ([] === $testClassFiles) {
 			$this->logger->write("no _test.php files in {$path}\n");
 			return;
 		}
 
+		$testClasses = [];
 		foreach ($testClassFiles as $filepath) {
 			require_once $filepath;
+			$classBasename = basename($filepath, '.php');
+			foreach (get_declared_classes() as $c) {
+				if (str_ends_with($c, $classBasename) && !\in_array($c, $testClasses, true)) {
+					$testClasses[] = $c;
+				}
+			}
 		}
 
-		foreach (get_declared_classes() as $class) {
-			$classParts = explode('\\', $class);
-			$classBasename = $classParts[\count($classParts) - 1];
-			if (str_starts_with($classBasename, '_')) {
-				// skip
-				continue;
-			}
+		$this->testClasses(...$testClasses);
+	}
 
+	public function testClasses(string ...$classes): void
+	{
+		$verbose = $this->verbose;
+
+		$counts = new Counts();
+
+		foreach ($classes as $class) {
 			if (is_subclass_of($class, T::class, true)) {
-				$test = new $class($path, $this->logger, $this->resultsCollector, $counts, $verbose);
+				$test = new $class($this->logger, $this->resultsCollector, $counts, $verbose);
 				$counts = $test->runTestMethods();
 			}
 		}
@@ -87,14 +91,21 @@ function testFiles(string $rootPath): array
 {
 	$rootPath = rtrim($rootPath, '/');
 	$cmd = "find {$rootPath} -name '*_test.php'";
-	$files = [];
+	$out = [];
 	$success = exec(
 		command: $cmd,
-		output: $files,
+		output: $out,
 		result_code: $code,
 	);
 	if (!$success) {
 		throw new \Exception("command \"{$cmd}\" failed with exit code {$code}");
+	}
+
+	$files = [];
+	foreach ($out as $file) {
+		if (!str_starts_with(basename($file), '_')) {
+			$files[] = $file;
+		}
 	}
 	return $files;
 }
