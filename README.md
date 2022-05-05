@@ -1,4 +1,4 @@
-# A better stdlib for PHP
+# php-stdlib
 
 This is very much alpha, work in progress, etc. The goal is to demonstrate how to use some patterns from Go's stdlib in PHP 8, particularly the io.Writer interface and net/http package.
 
