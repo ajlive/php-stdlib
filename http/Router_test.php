@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace http\test;
 
 use errors\Fatal;
-use http\DefaultResponseWriter;
+use http\ApacheResponseWriter;
+use http\Header;
 use http\Request;
 use http\ResponseWriter;
 use http\Router;
@@ -104,7 +105,7 @@ function handleUserByID(ResponseWriter $w, Request $r): void
 function servedOutput(Router $router, Request $r): string
 {
 	$handler = $router->findHandler($r);
-	$w = new DefaultResponseWriter([]);
+	$w = new ApacheResponseWriter(new Header());
 	ob_start();
 	$handler->serve($w, $r);
 	return ob_get_clean();

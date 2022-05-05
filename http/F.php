@@ -6,22 +6,9 @@ namespace http;
 
 abstract class F
 {
-	public static function serveRoutes(Router $router, Request $r): void
-	{
-		$handler = $router->findHandler($r);
-		if (null === $handler) {
-			throw new \Exception("no handler for url \"{$r->url}\"");
-		}
-		$w = $handler->server->w ?? null;
-		if (null === $w) {
-			$w = new DefaultResponseWriter([]);
-		}
-		$handler->serve($w, $r);
-	}
-
 	public static function makeResponseWriter(\io\Writer $w): ResponseWriter
 	{
-		return new MadeResponseWriter($w, []);
+		return new MadeResponseWriter($w, new Header());
 	}
 
 	public static function makeHandler(\Closure $handlerFunc): Handler
@@ -30,54 +17,30 @@ abstract class F
 	}
 }
 
-class DefaultResponseWriter implements ResponseWriter
-{
-	public function __construct(
-		private array $header,
-	) {
-	}
-
-	public function header(): array
-	{
-		return $this->header();
-	}
-
-	public function writeHeader(int $status): void
-	{
-		http_response_code($status);
-		foreach ($this->header() as $headerName => $v) {
-			header("{$headerName}: {$v}");
-		}
-	}
-
-	public function write(string $bytes): int
-	{
-		echo $bytes;
-		return \strlen($bytes);
-	}
-}
-
 class MadeResponseWriter implements ResponseWriter
 {
+	private readonly StatusWriter $statusWriter;
+
 	public function __construct(
 		private readonly \io\Writer $w,
-		private array $header,
+		private readonly Header $header,
+		?StatusWriter $statusWriter = null,
 	) {
+		if (null === $statusWriter) {
+			$statusWriter = new ApacheStatusWriter();
+		}
+		$this->statusWriter = $statusWriter;
 	}
 
-	public function header(): array
+	public function header(): Header
 	{
 		return $this->header;
 	}
 
 	public function writeHeader(int $status): void
 	{
-		http_response_code($status);
-		$headerLines = [];
-		foreach ($this->header as $headerName => $v) {
-			$headerLines[] = "{$headerName}: {$v}";
-		}
-		$_ = $this->w->write(implode("\n", $headerLines));
+		$this->statusWriter->writeStatus($status);
+		$this->header->write($this->w);
 	}
 
 	public function write(string $bytes): int
