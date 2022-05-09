@@ -61,13 +61,13 @@ final class T_test extends T
 
 		// check logging
 		$want = <<<'TXT'
-ok   testing\test\_T_testExampleT::testPassingTestPasses                          (testing/T_test.php)
-fail testing\test\_T_testExampleT::testFailingTestFails                           (testing/T_test.php)
-err  testing\test\_T_testExampleT::testThrowingTestErrs                           (testing/T_test.php)
-fail testing\test\_T_testExampleT::testFailingSubtestFailsTest                    (testing/T_test.php)
-fail testing\test\_T_testExampleT::testFailureOutsideSubtestFailsTest             (testing/T_test.php)
-err  testing\test\_T_testExampleT::testThrowingInSubtestErrsTest                  (testing/T_test.php)
-err  testing\test\_T_testExampleT::testThrowingInSubtestAndOutsideSubtestErrsTest (testing/T_test.php)
+ok   testing\test\_T_testExampleT::testPassingTestPasses                          (stdlib/testing/T_test.php)
+fail testing\test\_T_testExampleT::testFailingTestFails                           (stdlib/testing/T_test.php)
+err  testing\test\_T_testExampleT::testThrowingTestErrs                           (stdlib/testing/T_test.php)
+fail testing\test\_T_testExampleT::testFailingSubtestFailsTest                    (stdlib/testing/T_test.php)
+fail testing\test\_T_testExampleT::testFailureOutsideSubtestFailsTest             (stdlib/testing/T_test.php)
+err  testing\test\_T_testExampleT::testThrowingInSubtestErrsTest                  (stdlib/testing/T_test.php)
+err  testing\test\_T_testExampleT::testThrowingInSubtestAndOutsideSubtestErrsTest (stdlib/testing/T_test.php)
 TXT;
 		$got = trim($logger->got, "\n");
 		if ($got !== $want) {
@@ -87,31 +87,31 @@ TXT;
 		$want = <<<'TXT'
 --- FAIL: testing\test\_T_testExampleT
     --- FAIL: testFailingTestFails
-        testing/T_test.php:LN: m'test failed!
+        stdlib/testing/T_test.php:LN: m'test failed!
     --- ERROR: testThrowingTestErrs
-        Exception: m'test threw! in testing/T_test.php:LN
+        Exception: m'test threw! in stdlib/testing/T_test.php:LN
         Stack trace:
         #0 ... {main}
     --- FAIL: testFailingSubtestFailsTest
         --- FAIL: testFailingSubtestFailsTest/failing_subtest_1
-            testing/T_test.php:LN: m'subtest failed!
+            stdlib/testing/T_test.php:LN: m'subtest failed!
         --- FAIL: testFailingSubtestFailsTest/failing_subtest_2
-            testing/T_test.php:LN: m'subtest failed!
+            stdlib/testing/T_test.php:LN: m'subtest failed!
     --- FAIL: testFailureOutsideSubtestFailsTest
         --- FAIL: testFailureOutsideSubtestFailsTest/failing_subtest
-            testing/T_test.php:LN: m'subtest failed!
-        testing/T_test.php:LN: failed outside subtest
+            stdlib/testing/T_test.php:LN: m'subtest failed!
+        stdlib/testing/T_test.php:LN: failed outside subtest
     --- ERROR: testThrowingInSubtestErrsTest
         --- ERROR: testThrowingInSubtestErrsTest/error_in_subtest
-            Exception: m'subtest threw! in testing/T_test.php:LN
+            Exception: m'subtest threw! in stdlib/testing/T_test.php:LN
             Stack trace:
             #0 ... {main}
     --- ERROR: testThrowingInSubtestAndOutsideSubtestErrsTest
         --- ERROR: testThrowingInSubtestAndOutsideSubtestErrsTest/error_in_subtest
-            Exception: m'subtest threw! in testing/T_test.php:LN
+            Exception: m'subtest threw! in stdlib/testing/T_test.php:LN
             Stack trace:
             #0 ... {main}
-        Exception: then m'test threw outside the subtest! in testing/T_test.php:LN
+        Exception: then m'test threw outside the subtest! in stdlib/testing/T_test.php:LN
         Stack trace:
         #0 ... {main}
 TXT;

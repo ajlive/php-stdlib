@@ -38,7 +38,7 @@ TXT;
 	public function testOutputPassingVerbose(): void
 	{
 		$want = <<<'TXT'
-ok   testing\Runner_testdata\passing\_Passing_test::testPasses (testing/Runner_testdata/passing/_Passing_test.php)
+ok   testing\Runner_testdata\passing\_Passing_test::testPasses (stdlib/testing/Runner_testdata/passing/_Passing_test.php)
 
 1 tests; 1 passed; 0 failed; 0 erred
 TXT;
@@ -59,12 +59,12 @@ FFE.
 
 --- FAIL: testing\Runner_testdata\failing\_Failing_test
     --- FAIL: testFails
-        testing/Runner_testdata/failing/_Failing_test.php:LN: m'test failed!
+        stdlib/testing/Runner_testdata/failing/_Failing_test.php:LN: m'test failed!
 --- FAIL: testing\Runner_testdata\failing\_ThrowingAndFailing_test
     --- FAIL: testFails
-        testing/Runner_testdata/failing/_ThrowingAndFailing_test.php:LN: m'test failed!
+        stdlib/testing/Runner_testdata/failing/_ThrowingAndFailing_test.php:LN: m'test failed!
     --- ERROR: testThrows
-        Exception: m'test threw! in testing/Runner_testdata/failing/_ThrowingAndFailing_test.php:LN
+        Exception: m'test threw! in stdlib/testing/Runner_testdata/failing/_ThrowingAndFailing_test.php:LN
         Stack trace:
         #0 ... {main}
 
@@ -84,19 +84,19 @@ TXT;
 	public function testOutputVerbose(): void
 	{
 		$want = <<<'TXT'
-fail testing\Runner_testdata\failing\_Failing_test::testFails (testing/Runner_testdata/failing/_Failing_test.php)
-fail testing\Runner_testdata\failing\_ThrowingAndFailing_test::testFails  (testing/Runner_testdata/failing/_ThrowingAndFailing_test.php)
-err  testing\Runner_testdata\failing\_ThrowingAndFailing_test::testThrows (testing/Runner_testdata/failing/_ThrowingAndFailing_test.php)
-ok   testing\Runner_testdata\passing\_Passing_test::testPasses (testing/Runner_testdata/passing/_Passing_test.php)
+fail testing\Runner_testdata\failing\_Failing_test::testFails (stdlib/testing/Runner_testdata/failing/_Failing_test.php)
+fail testing\Runner_testdata\failing\_ThrowingAndFailing_test::testFails  (stdlib/testing/Runner_testdata/failing/_ThrowingAndFailing_test.php)
+err  testing\Runner_testdata\failing\_ThrowingAndFailing_test::testThrows (stdlib/testing/Runner_testdata/failing/_ThrowingAndFailing_test.php)
+ok   testing\Runner_testdata\passing\_Passing_test::testPasses (stdlib/testing/Runner_testdata/passing/_Passing_test.php)
 
 --- FAIL: testing\Runner_testdata\failing\_Failing_test
     --- FAIL: testFails
-        testing/Runner_testdata/failing/_Failing_test.php:LN: m'test failed!
+        stdlib/testing/Runner_testdata/failing/_Failing_test.php:LN: m'test failed!
 --- FAIL: testing\Runner_testdata\failing\_ThrowingAndFailing_test
     --- FAIL: testFails
-        testing/Runner_testdata/failing/_ThrowingAndFailing_test.php:LN: m'test failed!
+        stdlib/testing/Runner_testdata/failing/_ThrowingAndFailing_test.php:LN: m'test failed!
     --- ERROR: testThrows
-        Exception: m'test threw! in testing/Runner_testdata/failing/_ThrowingAndFailing_test.php:LN
+        Exception: m'test threw! in stdlib/testing/Runner_testdata/failing/_ThrowingAndFailing_test.php:LN
         Stack trace:
         #0 ... {main}
 
