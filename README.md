@@ -8,3 +8,11 @@ See the developing [API example](examples/basicAPI/) for now. You can run :
 composer install
 php examples/basicAPI/runcli.php
 ```
+
+## Testing
+
+You can run all tests using
+
+```
+composer test
+```

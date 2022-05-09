@@ -24,6 +24,15 @@ class Runner
 				$testClassFiles[] = $path;
 				continue;
 			}
+			if (is_file($path) && !str_ends_with($path, '_test.php')) {
+				$msg = "file {$path} does not match pattern \"*_test.php\"";
+				throw new class($msg) extends \Exception implements \errors\Invalid {
+					public function isInvalid(): bool
+					{
+						return true;
+					}
+				};
+			}
 			$testPaths = testFiles($path);
 			foreach ($testPaths as $testPath) {
 				if (!\in_array($testPath, $testClassFiles, true)) {
@@ -33,7 +42,7 @@ class Runner
 		}
 		sort($testClassFiles);
 		if ([] === $testClassFiles) {
-			$this->logger->write("no _test.php files in {$path}\n");
+			$this->logger->write("no files matching pattern \"*_test.php\" in {$path}\n");
 			return;
 		}
 
