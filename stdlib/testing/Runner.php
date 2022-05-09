@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace testing;
 
+class BadPath extends \Exception implements \errors\Invalid
+{
+	public function isInvalid(): bool
+	{
+		return true;
+	}
+}
 class Runner
 {
 	public function __construct(
@@ -25,13 +32,7 @@ class Runner
 				continue;
 			}
 			if (is_file($path) && !str_ends_with($path, '_test.php')) {
-				$msg = "file {$path} does not match pattern \"*_test.php\"";
-				throw new class($msg) extends \Exception implements \errors\Invalid {
-					public function isInvalid(): bool
-					{
-						return true;
-					}
-				};
+				throw new BadPath("filename {$path} does not match pattern *_test.php");
 			}
 			$testPaths = testFiles($path);
 			foreach ($testPaths as $testPath) {
@@ -42,8 +43,8 @@ class Runner
 		}
 		sort($testClassFiles);
 		if ([] === $testClassFiles) {
-			$this->logger->write("no files matching pattern \"*_test.php\" in {$path}\n");
-			return;
+			$path = rtrim($path, '/');
+			throw new BadPath("found no test files {$path}/**/*_test.php");
 		}
 
 		$testClasses = [];
