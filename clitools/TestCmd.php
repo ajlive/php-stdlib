@@ -24,10 +24,12 @@ TXT;
 
 	public const help = <<<'TXT'
 Description:
-    Runs all testing\T classes in paths.
+    Runs testing\T classes in *_test.php files.
 
 Arguments:
     paths          files containing testing\T classes or dirs to search for *_test.php files (default: ".")
+
+Options:
     -h, --help     show this help message and exit
     -v, --verbose  display verbose output
 TXT;
@@ -37,7 +39,7 @@ TXT;
 		$args = static::parse();
 
 		if ($args->showHelpAndExit) {
-			echo static::usage."\n".static::help."\n";
+			printf("Usage:\n    %s\n\n%s\n", static::usage, static::help);
 			exit;
 		}
 
