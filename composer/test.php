@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-namespace clitools;
-
 require_once __DIR__.'/../vendor/autoload.php';
 
 class TestCmdArgs
@@ -57,13 +55,13 @@ TXT;
 	private static function parse(): TestCmdArgs
 	{
 		global $argv;
-		$args = \array_slice($argv, 1);
+		$args = array_slice($argv, 1);
 
 		$options = getopt('hv', ['help', 'verbose']);
 		$paths = [];
 		foreach ($args as $arg) {
 			switch (true) {
-				case str_starts_with($arg, '-') && !\in_array(ltrim($arg, '-'), array_keys($options), true):
+				case str_starts_with($arg, '-') && !in_array(ltrim($arg, '-'), array_keys($options), true):
 					printf("%s\nunknown option '%s': see --help for a list of valid options\n", static::usage, $arg);
 					exit(1);
 				case !str_starts_with($arg, '-') && !file_exists($arg):
